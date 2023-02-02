@@ -26,7 +26,8 @@ function gog(event) {
 
 
 function fox(event) {
-    searchImages = event.target.value
+    searchImages = (event.target.value).trim()
+
      
 };
 
