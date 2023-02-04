@@ -24,7 +24,7 @@ form.addEventListener('input', onFormInput);
         return
     }
       getPhotos()
-          .then((posts) => renderPosts(posts.hits))
+        .then((posts) => renderPosts(posts.hits))
          .catch((error) => console.log(error));
           
 };
@@ -44,10 +44,11 @@ async function getPhotos() {
 
 
  function renderPosts(posts) {
-    const createGallery = posts.map(({ webformatURL, previewURL, tags, likes, views, comments, downloads }) => {
-        return `<a class="gallery__item" href="${webformatURL}">
-  <img src="${previewURL}" alt="${tags}" loading="lazy" />
-  </a>
+    const createGallery = posts.map(({ webformatURL, largeImageURL, tags, likes, views, comments, downloads }) => {
+      return `
+      <a class="gallery__item" href="${largeImageURL}">
+  <img src="${webformatURL}" alt="${tags}" loading="lazy" />
+  <div class="wrap">
     <p class="info-item">
       <b>likes: ${likes}</b>
     </p>
@@ -59,7 +60,9 @@ async function getPhotos() {
     </p>
     <p class="info-item">
       <b>Downloads: ${downloads}</b>
-    </p>`
+    </p>
+    </div>
+     </a>`    
 }).join('');
 
      photoGalleri.innerHTML = createGallery;
