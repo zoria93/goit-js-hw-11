@@ -62,7 +62,7 @@ async function getPhotos() {
     </p>`
 }).join('');
 
-photoGalleri.insertAdjacentHTML("beforeend", createGallery);
+     photoGalleri.innerHTML = createGallery;
 
 new SimpleLightbox('.gallery a', { 
   captions: true,
