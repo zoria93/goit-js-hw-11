@@ -2,13 +2,13 @@ import Notiflix from 'notiflix';
 import SimpleLightbox from "simplelightbox";
 import "simplelightbox/dist/simple-lightbox.min.css";
 import { debounce } from "lodash";
-import InfiniteScroll from 'infinite-scroll';
+
+// import InfiniteScroll from 'infinite-scroll';
 
 
 
 // const InfiniteScroll = require('infinite-scroll');
 // const imagesLoaded = require('imagesloaded');
-const axios = require('axios').default;
 const baseUrl = 'https://pixabay.com/api/';
 const KEY_API = '33301172-db6a954cc7cf3c460999838e3';
 
@@ -21,17 +21,22 @@ const loadMoreBtn = document.querySelector(".load-more");
 
 let searchImages = "";
 let pageNumber = 1;
+const perPage = 40;
 
 
 searchForm.addEventListener('submit', onSearch);
 loadMoreBtn.addEventListener('click', onScroll)
-// window.addEventListener('scroll', debounce((onScroll), 500))
-// loadMoreBtn.style.display = 'none';
+// window.addEventListener('scroll', debounce((onScroll), 300,  {
+//       leading: false,
+//       trailing: true,
+//     }))
+loadMoreBtn.style.display = 'none';
 
 
 function onSearch(event) {
   event.preventDefault();
   clearContainer()
+  loadMoreBtn.style.display = 'none';
   pageNumber = 1;
   searchImages = event.currentTarget.elements.searchQuery.value.trim();
       if (searchImages === "") {
@@ -42,10 +47,12 @@ function onSearch(event) {
       if (posts.hits.length === 0) {
       return Notiflix.Notify.failure("Sorry, there are no images matching your search query. Please try again.");
       };
-        renderPosts(posts.hits);
-        Notiflix.Notify.success(`Hooray! We found ${posts.totalHits} images.`);    
+      renderPosts(posts.hits);
+      loadMoreBtn.style.display = 'inline-block';
+      Notiflix.Notify.success(`Hooray! We found ${posts.totalHits} images.`);
+      
     })
-        .catch((error) => console.log(error));
+    .catch((error) => console.log(error));
   searchForm.reset();
 };
 
@@ -53,24 +60,28 @@ function onSearch(event) {
 function onScroll(event) {
   event.preventDefault();
   pageNumber += 1;
+    loadMoreBtn.style.display = 'none';
       getPhotos()
         .then((posts) => {
-          if (posts.hits.length !== 0) {
-            renderPosts(posts.hits);  
-          } if (posts.hits.length === 0) {
-           Notiflix.Notify.info("We're sorry, but you've reached the end of search results.");
-            console.log(posts.hits.length === 0);
-         
+          loadMoreBtn.style.display = 'inline-block';
+          const count = Math.round(posts.totalHits / perPage);
+          console.log(count)
+           if (pageNumber > count) {
+             Notiflix.Notify.info("We're sorry, but you've reached the end of search results.");
+             loadMoreBtn.style.display = 'none';
+            console.log(pageNumber > count);
           }
-          
+           renderPosts(posts.hits); 
         })
-        .catch((error) => console.log(error));
+        .catch((error) => {
+          console.log(error); 
+        } );
    
 };
 
 
 async function getPhotos() {
-    const response = await fetch(`${baseUrl}?key=${KEY_API}&q=${searchImages}&image_type=photo&orientation=horizontal&safesearch=true&page=${pageNumber}&per_page=40`);
+    const response = await fetch(`${baseUrl}?key=${KEY_API}&q=${searchImages}&image_type=photo&orientation=horizontal&safesearch=true&page=${pageNumber}&per_page=${perPage}`);
      const posts =  response.json();
     return posts
 };
@@ -101,21 +112,21 @@ async function getPhotos() {
    
    photoGalleri.insertAdjacentHTML("beforeend", createGallery);
 
-new SimpleLightbox('.gallery a', { 
-  captions: true,
+   new SimpleLightbox('.gallery a', {
+   captions: true,
   captionsData: 'alt',
   captionDelay: 250,
-
-});
+  });
 
 };
+
 
 function clearContainer() {
    photoGalleri.innerHTML = '';
 };
 
 // function onCollectionEnd() {
-//   Notify.info("We're sorry, but you've reached the end of search results.", {
+//   Notiflix.Notify.failure("Sorry, there are no images matching your search query. Please try again.", {
 //     showOnlyTheLastOne: true,
 //     cssAnimationDuration: 1000,
 //   });
