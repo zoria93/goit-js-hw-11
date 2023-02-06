@@ -1,23 +1,17 @@
+import axios from 'axios';
 import Notiflix from 'notiflix';
 import SimpleLightbox from "simplelightbox";
-import "simplelightbox/dist/simple-lightbox.min.css";
-import { debounce } from "lodash";
-
-// import InfiniteScroll from 'infinite-scroll';
-
-
-
-// const InfiniteScroll = require('infinite-scroll');
-// const imagesLoaded = require('imagesloaded');
-const baseUrl = 'https://pixabay.com/api/';
-const KEY_API = '33301172-db6a954cc7cf3c460999838e3';
+import "simplelightbox/dist/simple-lightbox.min.css"
 
 
 
 const searchForm = document.querySelector(".search-form");
 const photoGalleri = document.querySelector(".gallery");
 const loadMoreBtn = document.querySelector(".load-more");
-// const scrollBoby = document.querySelector(".body")
+
+
+const baseUrl = 'https://pixabay.com/api/';
+const KEY_API = '33301172-db6a954cc7cf3c460999838e3';
 
 let searchImages = "";
 let pageNumber = 1;
@@ -25,11 +19,8 @@ const perPage = 40;
 
 
 searchForm.addEventListener('submit', onSearch);
-loadMoreBtn.addEventListener('click', onScroll)
-// window.addEventListener('scroll', debounce((onScroll), 300,  {
-//       leading: false,
-//       trailing: true,
-//     }))
+loadMoreBtn.addEventListener('click', loadButtonClick)
+
 loadMoreBtn.style.display = 'none';
 
 
@@ -37,19 +28,20 @@ function onSearch(event) {
   event.preventDefault();
   clearContainer()
   loadMoreBtn.style.display = 'none';
-  pageNumber = 1;
+  resetPage();
   searchImages = event.currentTarget.elements.searchQuery.value.trim();
       if (searchImages === "") {
         return
   };
   getPhotos()
     .then((posts) => {
-      if (posts.hits.length === 0) {
+      if (posts.data.hits.length === 0) {
       return Notiflix.Notify.failure("Sorry, there are no images matching your search query. Please try again.");
       };
-      renderPosts(posts.hits);
+      renderPosts(posts.data.hits);
+      refreshSimpleLightBox()
       loadMoreBtn.style.display = 'inline-block';
-      Notiflix.Notify.success(`Hooray! We found ${posts.totalHits} images.`);
+      Notiflix.Notify.success(`Hooray! We found ${posts.data.totalHits} images.`);
       
     })
     .catch((error) => console.log(error));
@@ -57,33 +49,33 @@ function onSearch(event) {
 };
 
 
-function onScroll(event) {
+function loadButtonClick(event) {
   event.preventDefault();
-  pageNumber += 1;
-    loadMoreBtn.style.display = 'none';
-      getPhotos()
+  incrementPage();
+  loadMoreBtn.style.display = 'none';
+  getPhotos()
         .then((posts) => {
           loadMoreBtn.style.display = 'inline-block';
-          const count = Math.round(posts.totalHits / perPage);
-          console.log(count)
+          const count = Math.round(posts.data.totalHits / perPage);
            if (pageNumber > count) {
-             Notiflix.Notify.info("We're sorry, but you've reached the end of search results.");
+             onCollectionEnd()
              loadMoreBtn.style.display = 'none';
-            console.log(pageNumber > count);
-          }
-           renderPosts(posts.hits); 
+          };
+          renderPosts(posts.data.hits); 
+          refreshSimpleLightBox()
+          onScroll();
         })
         .catch((error) => {
           console.log(error); 
-        } );
+        });
    
 };
 
 
 async function getPhotos() {
-    const response = await fetch(`${baseUrl}?key=${KEY_API}&q=${searchImages}&image_type=photo&orientation=horizontal&safesearch=true&page=${pageNumber}&per_page=${perPage}`);
-     const posts =  response.json();
-    return posts
+    const response =  axios.get(`${baseUrl}?key=${KEY_API}&q=${searchImages}&image_type=photo&orientation=horizontal&safesearch=true&page=${pageNumber}&per_page=${perPage}`);
+  const posts = await response;
+  return posts;
 };
 
 
@@ -112,35 +104,47 @@ async function getPhotos() {
    
    photoGalleri.insertAdjacentHTML("beforeend", createGallery);
 
-   new SimpleLightbox('.gallery a', {
-   captions: true,
-  captionsData: 'alt',
-  captionDelay: 250,
-  });
-
 };
 
+
+function incrementPage() {
+  pageNumber += 1;
+};
+
+function resetPage() {
+  pageNumber = 1;
+};
 
 function clearContainer() {
    photoGalleri.innerHTML = '';
 };
 
-// function onCollectionEnd() {
-//   Notiflix.Notify.failure("Sorry, there are no images matching your search query. Please try again.", {
-//     showOnlyTheLastOne: true,
-//     cssAnimationDuration: 1000,
-//   });
-//   loadMoreBtn.style.display = 'none';
-// }
 
 
-// function onScroll() {
-//   const { height: cardHeight} = document
-//     .querySelector('.gallery')
-//     .firstElementChild.getBoundingClientRect();
+function refreshSimpleLightBox() {
+  new SimpleLightbox('.gallery a', {
+    captions: true,
+  captionsData: 'alt',
+    captionDelay: 250,
+    scrollZoom: false,
+  }).refresh();
+};
 
-//   window.scrollBy({
-//     top: cardHeight * 2,
-//     behavior: 'smooth',
-//   });
-// }
+
+function onCollectionEnd() {
+  Notiflix.Notify.info("We're sorry, but you've reached the end of search results.", {
+    showOnlyTheLastOne: true,
+    cssAnimationDuration: 1000,
+  });
+};
+
+function onScroll() {
+  const { height: cardHeight} = document
+    .querySelector('.gallery')
+    .firstElementChild.getBoundingClientRect();
+
+  window.scrollBy({
+    top: cardHeight * 3.3,
+    behavior: 'smooth',
+  });
+};
