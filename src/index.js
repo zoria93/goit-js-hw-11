@@ -19,7 +19,7 @@ const perPage = 40;
 
 
 searchForm.addEventListener('submit', onSearch);
-loadMoreBtn.addEventListener('click', loadButtonClick)
+loadMoreBtn.addEventListener('click', onLoadButtonClick)
 
 loadMoreBtn.style.display = 'none';
 
@@ -41,15 +41,14 @@ function onSearch(event) {
       renderPosts(posts.data.hits);
       refreshSimpleLightBox()
       loadMoreBtn.style.display = 'inline-block';
-      Notiflix.Notify.success(`Hooray! We found ${posts.data.totalHits} images.`);
-      
+      Notiflix.Notify.success(`Hooray! We found ${posts.data.totalHits} images.`);  
     })
-    .catch((error) => console.log(error));
+    .catch((error) => console.log(error.message));
   searchForm.reset();
 };
 
 
-function loadButtonClick(event) {
+function onLoadButtonClick(event) {
   event.preventDefault();
   incrementPage();
   loadMoreBtn.style.display = 'none';
@@ -65,10 +64,15 @@ function loadButtonClick(event) {
           refreshSimpleLightBox()
           onScroll();
         })
-        .catch((error) => {
-          console.log(error); 
+    .catch((error) => {
+      if ((error.response.status = 400)) {
+        onCollectionEnd();
+      } else {
+        console.log(error.message);
+          }
+      
         });
-   
+  
 };
 
 
@@ -80,7 +84,7 @@ async function getPhotos() {
 
 
 
- function renderPosts(posts) {
+function renderPosts(posts) {
     const createGallery = posts.map(({ webformatURL, largeImageURL, tags, likes, views, comments, downloads }) => {
       return `
       <a class="gallery__item" href="${largeImageURL}">
@@ -142,7 +146,7 @@ function onScroll() {
   const { height: cardHeight} = document
     .querySelector('.gallery')
     .firstElementChild.getBoundingClientRect();
-
+  
   window.scrollBy({
     top: cardHeight * 3.3,
     behavior: 'smooth',
