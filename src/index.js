@@ -55,7 +55,7 @@ function onLoadButtonClick(event) {
   getPhotos()
         .then((posts) => {
           loadMoreBtn.style.display = 'inline-block';
-          const count = Math.round(posts.data.totalHits / perPage);
+          const count = Math.floor(posts.data.totalHits / perPage);
            if (pageNumber > count) {
              onCollectionEnd()
              loadMoreBtn.style.display = 'none';
